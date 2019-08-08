@@ -1,0 +1,219 @@
+
+->  In setting.py will section where database connection is available.
+	
+	DATABASES = {
+    'default': 		{
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+					}
+		}
+->  by default sqlite3 connection is there.
+
+-> When we run the server, we can see there are 17 unapplied migration for wee have initiate migrate 
+	using given command
+	#python manage.py migrate
+	
+You have 17 unapplied migration(s). Your project may not work properly until you apply the migrations for app(s): admin,
+ auth, contenttypes, sessions.
+Run 'python manage.py migrate' to apply them.
+July 31, 2019 - 22:16:07
+Django version 2.2.3, using settings 'LearnProject2.settings'
+Starting development server at http://127.0.0.1:8000/
+
+
+->  Initiate the migration of database.
+
+------------------------Migrate Command Output--------------------
+(venv) D:\PythonPractice\DjangoApp\LearnProject2>python manage.py migrate
+Operations to perform:
+  Apply all migrations: admin, auth, contenttypes, sessions
+Running migrations:
+  Applying contenttypes.0001_initial... OK
+  Applying auth.0001_initial... OK
+  Applying admin.0001_initial... OK
+  Applying admin.0002_logentry_remove_auto_add... OK
+  Applying admin.0003_logentry_add_action_flag_choices... OK
+  Applying contenttypes.0002_remove_content_type_name... OK
+  Applying auth.0002_alter_permission_name_max_length... OK
+  Applying auth.0003_alter_user_email_max_length... OK
+  Applying auth.0004_alter_user_username_opts... OK
+  Applying auth.0005_alter_user_last_login_null... OK
+  Applying auth.0006_require_contenttypes_0002... OK
+  Applying auth.0007_alter_validators_add_error_messages... OK
+  Applying auth.0008_alter_user_username_max_length... OK
+  Applying auth.0009_alter_user_last_name_max_length... OK
+  Applying auth.0010_alter_group_name_max_length... OK
+  Applying auth.0011_update_proxy_permissions... OK
+  Applying sessions.0001_initial... OK
+
+----------------------------------------------------------------------
+
+
+-> Now rerun the server using the command : 'python manage.py runserver'
+
+System check identified no issues (0 silenced).
+July 31, 2019 - 22:23:09
+Django version 2.2.3, using settings 'LearnProject2.settings'
+Starting development server at http://127.0.0.1:8000/
+Quit the server with CTRL-BREAK.
+
+
+-> Now there is no pending migration.
+
+----------------------- CREATE MODELS ----------------------
+-> Lets take an example to create an app music.
+
+->  Create models in music app.
+
+models.py
+
+	from django.db import models
+
+	# Create your models here.
+
+	class Album(models.Model):
+		artist = models.CharField(max_length=250)
+		album_title = models.CharField(max_length=250)
+		genre = models.CharField(max_length=300)
+
+
+	class songs(models.Model):
+		album = models.ForeignKey(Album, on_delete=models.CASCADE())
+		filetype = models.CharField(max_length=30)
+		song_title = models.CharField(max_length=400)
+
+
+-> NOw do the changes in setting.py in installed app setting.
+
+setting.py : INSTALLED_APPS :
+
+# Application definition
+
+INSTALLED_APPS = [
+    'music.app.MusicConfig'
+    'django.contrib.admin',
+    'django.contrib.auth',
+    'django.contrib.contenttypes',
+    'django.contrib.sessions',
+    'django.contrib.messages',
+    'django.contrib.staticfiles',
+	]
+
+-> Create the migrate for the music app, it will create tables for us.
+-> (venv) D:\PythonPractice\DjangoApp\LearnProject2>python manage.py makemigrations music
+Migrations for 'music':
+  music\migrations\0001_initial.py
+    - Create model Album
+    - Create model songs
+ 
+ 
+-> To check what are the migratiobn actually on we can user below command :
+
+
+python manage.py sqlmigrate music 0001
+BEGIN;
+--
+-- Create model Album
+--
+CREATE TABLE "music_album" ("id" integer NOT NULL PRIMARY KEY AUTOINCREMENT, "artist" varchar(250) NOT NULL, "album_titl
+e" varchar(250) NOT NULL, "genre" varchar(300) NOT NULL);
+--
+-- Create model songs
+--
+CREATE TABLE "music_songs" ("id" integer NOT NULL PRIMARY KEY AUTOINCREMENT, "filetype" varchar(30) NOT NULL, "song_titl
+e" varchar(400) NOT NULL, "album_id" integer NOT NULL REFERENCES "music_album" ("id") DEFERRABLE INITIALLY DEFERRED);
+CREATE INDEX "music_songs_album_id_c1688d55" ON "music_songs" ("album_id");
+COMMIT;
+
+(venv) D:\PythonPractice\DjangoApp\LearnProject2>
+
+
+-> Now migrate it again, to make the data in sync :
+
+	(venv) D:\PythonPractice\DjangoApp\LearnProject2>python manage.py migrate
+	Operations to perform:
+	  Apply all migrations: admin, auth, contenttypes, music, sessions
+	Running migrations:
+	  Applying music.0001_initial... OK
+
+-> when we do changes in models then we have to run this command
+
+1.> python manage.py makemigrations music ->  It will create migration for your app.
+2.> python manage.py migrate ->  it sync you data from databases 
+
+------------------DJANGO DATABASE API --------------------
+-> Given command will open django database shell , where we can save data in database and interate through it.
+
+(venv) D:\PythonPractice\DjangoApp\LearnProject2>python manage.py shell
+Python 3.6.0 (v3.6.0:41df79263a11, Dec 23 2016, 07:18:10) [MSC v.1900 32 bit (Intel)] on win32
+Type "help", "copyright", "credits" or "license" for more information.
+
+>>> from music.models import Album, songs
+>>>
+>>> Album.objects.all()
+<QuerySet []>
+>>> a = Album(artist="RaficDa", album_title='Namo', genre='country')
+>>> a.save()
+>>> Album.objects.all()
+<QuerySet [<Album: Album object (1)>]>
+>>> a.artist
+'RaficDa'
+>>> b=Album()
+>>> b.artsit = "Anuradha"
+>>> b.album_title="Nadiya k par"
+>>> b.genre = "Mumbai"
+>>> b.save()
+
+
+
+-> Exit above and set new definition in the class :
+
+    def __str__(self):
+        return self.album_title +" . "+self.artist
+		
+(venv) D:\PythonPractice\DjangoApp\LearnProject2>python manage.py shell
+Python 3.6.0 (v3.6.0:41df79263a11, Dec 23 2016, 07:18:10) [MSC v.1900 32 bit (Intel)] on win32
+Type "help", "copyright", "credits" or "license" for more information.
+(InteractiveConsole)
+>>> from music.models import Album, songs
+>>> Album.objects.all()
+<QuerySet [<Album: Namo . RaficDa>, <Album: Nadiya k par . >]>
+>>> Album.objects.filter(id=2)
+<QuerySet [<Album: Nadiya k par . >]>
+>>> Album.objects.filter(id=1)
+<QuerySet [<Album: Namo . RaficDa>]>
+>>> Album.objects.filter(id=1)
+
+
+---------------------------------CREATE SUPERUSER ADMIN------------------------------
+
+
+(venv) D:\PythonPractice\DjangoApp\LearnProject2>python manage.py createsuperuser
+Username (leave blank to use 'deepesh.yadav'): admin
+Email address: admin@examples.com
+Password:
+Password (again):
+The password is too similar to the username.
+Bypass password validation and create user anyway? [y/N]: y
+Superuser created successfully.
+
+username : admin
+password : admin@123
+
+-> now go to url : http://127.0.0.1:8000/admin/
+   and llogin with credentils with admin.
+->  Users and group two interface will be available there.
+
+-> Now we can register above Album models in admin panel.
+
+-> Go to music/admin.py and do this changes. 
+
+	from django.contrib import admin
+	from .models import Album
+	admin.site.register(Album)
+	
+-> Refresh the admin panel, Album teble should be available on UI, that user can modify data there.
+
+
+
+

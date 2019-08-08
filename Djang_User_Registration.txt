@@ -1,0 +1,228 @@
+IF was the see data in sqlite database, then download sqlite browser
+through which we can clear idea what actual data available in the tables.
+
+
+1. Create New app to user account and login functionality.
+	-> manage.py startapp accounts
+
+
+2. Add urls.py file inside account directory.
+
+3. Map account urls.py file with project urls.py file.
+
+prject/urls.py
+
+from django.contrib import admin
+from django.urls import path, include
+
+urlpatterns = [
+    path('', include('testapp.urls')),
+    path('music/', include('music.urls')),
+    path('accounts/', include('accounts.urls')),
+    path('admin/', admin.site.urls),
+]
+
+4.  Navigate account/urls and do the mapping for registration of user.
+
+accounts/urls.py
+
+from django.contrib import admin
+from django.urls import path, include
+from . import views
+
+urlpatterns = [
+    path('register', views.register, name='register'),
+]
+
+5. Create register.html file with form tag contain field
+usename, firstname, lastname, email, password1, password2 and submit button.
+There also message section, will print all validation messages coming from view.
+
+template/register.html
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+    <form action="register" method="post">
+        {% csrf_token %}
+        <input type="text", name="first_name", placeholder="Firstname"><br>
+        <input type="text", name="last_name", placeholder="Lastname"><br>
+        <input type="text", name="email", placeholder="email"><br>
+        <input type="password", name="password1", placeholder="password"><br>
+        <input type="password", name="password2", placeholder="Confirm-password"><br>
+        <input type="submit", name="submit", value="Submit">
+
+
+    </form>
+
+    {% for message in messages %}
+
+    <h1>{{ message }}</h1>
+
+    {% endfor %}
+
+
+</body>
+</html>
+
+7. Do the changes in index.html file to make register option available on the page.
+template/index.html
+
+snipate of menu on index.html
+
+<nav class="main_nav">
+	<ul class="d-flex flex-row align-items-start justify-content-start">
+		<li><a href="/">Home</a></li>
+		<li><a href="contact.html">Contact</a></li>
+		<li><a href="contact/register">Register</a></li>
+	</ul>
+</nav>
+
+6. Navigate to accounts/views.py and create defination to register new user
+
+from django.shortcuts import render, redirect
+from django.contrib import messages
+from django.contrib.auth.models import User, auth
+
+def register(request):
+    if request.method == "POST":
+        first_name = request.POST['first_name']
+        last_name = request.POST['last_name']
+        email = request.POST['email']
+        password1 = request.POST['password1']
+        password2 = request.POST['password2']
+        if password1 == password2:
+            if User.objects.filter(username=first_name).exists():
+                messages.info(request, "Username taken")
+                return redirect('register')
+            elif User.objects.filter(email=email).exists():
+                messages.info(request, "Email taken")
+                return redirect('register')
+            else:
+                user = User.objects.create_user(username=first_name,  password=password1, first_name=first_name, last_name= last_name, email=email)
+                user.save();
+                messages.info(request, "User Created")
+                return redirect('register')
+
+        else:
+            messages.info(request, "Password is not matching")
+            return redirect('register')
+        return redirect('/')
+    else:
+        return render(request, 'register.html')
+
+-> In above code we use user and auth model which already available in 
+   django framework.
+
+-> Another message library we user show messages on the UI , if validation occures clase occures.
+
+--------------------------LOGIN--------------------------------
+
+1. Create login.html file which will accept username and password.
+
+template/login.html
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+    <form action="login" method="post">
+        {% csrf_token %}
+        <input type="text", name="username", placeholder="Username"><br>
+        <input type="password", name="password", placeholder="Password"><br>
+        <input type="submit", name="submit", value="Submit">
+    </form>
+
+    {% for message in messages %}
+
+    <h1>{{ message }}</h1>
+
+    {% endfor %}
+</body>
+</html>
+ 
+2. Add login link in index.html.
+
+template/index.html
+
+<li><a href="contact/register">Register</a></li>										
+<li><a href="contact/login">Login</a></li> 
+
+
+3. Create url mapping for login in contact/views.py
+
+contacts/urls.py
+
+from django.contrib import admin
+from django.urls import path, include
+from . import views
+
+urlpatterns = [
+    path('register', views.register, name='register'),
+    path('login', views.login, name='login'),
+    path('logout', views.logout, name='logout')
+]
+
+
+4. create login method in view.py
+contacts/views.py
+
+def login(request):
+    if request.method == 'POST':
+        username = request.POST['username']
+        password = request.POST['password']
+        user = auth.authenticate(username=username, password=password)
+        if user is not None:
+            auth.login(request, user)
+            messages.info(request, 'login successfully')
+            return redirect("/")
+        else:
+            messages.info(request, 'Invalid Credentials')
+            redirect(login)
+    else:
+        return render(request, "login.html")
+
+
+-> refresh server url and see login and Registration button should be visible on page.
+
+-------------------------Logout -----------------------
+
+1. for logout option do changes in index.html 
+
+{% if user.is_authenticated %}
+	<li><a>Hello, {{ user.first_name }}</a></li>
+	<li><a href="contact/logout">Logout</a></li>
+{% else %}
+	<li><a href="contact/register">Register</a></li>
+	<li><a href="contact/login">Login</a></li>
+{% endif %}
+
+2. create logout mapping in contact/urls.py file.
+
+from django.contrib import admin
+from django.urls import path, include
+from . import views
+
+urlpatterns = [
+    path('register', views.register, name='register'),
+    path('login', views.login, name='login'),
+    path('logout', views.logout, name='logout')
+]
+
+
+3. Create logout method in contacts/views.py file
+
+def logout(request):
+    auth.logout(request)
+    return redirect('/')
+
+4. Refresh the page login with valid credentials, logout link and greating message will be
+displayed for the user logged in.
+

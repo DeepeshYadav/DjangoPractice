@@ -1,0 +1,10 @@
+1. post menthod.
+2. Template ->
+    -> Create static folder and copy all static contentt
+    ->  copy index.html in template
+3.  Mapping in setting.py
+4.  model class 
+5.  dynamic data
+6. for loop in index_loop.html
+7. If condition in index_loop.html
+8. Base URL
